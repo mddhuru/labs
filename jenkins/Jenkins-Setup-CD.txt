@@ -90,3 +90,23 @@ sudo docker tag addressbookapp:v2 leaddevops/addressbook:v2
 sudo docker push leaddevops/addressbook:v2
 cd /home/ansible
 ansible-playbook -i hosts addressbook-deploy.yml
+
+
+sudo chown jenkins:jenkins /tmp/deploy1
+cd /tmp/deploy1
+sudo cp /var/lib/jenkins/workspace/5.package/target/sampleapp.war .
+sudo touch Dockerfile
+sudo chown jenkins:jenkins Dockerfile
+sudo cat <<EOT>> Dockerfile
+FROM tomcat
+ADD sampleapp.war /usr/local/tomcat/webapps
+CMD "catalina.sh" "run"
+EXPOSE 8080
+EOT
+sudo docker build -t leaddevops/app:$BUILD_NUMBER .
+sudo docker run -itd --name=app-$BUILD_NUMBER -P leaddevops/app:$BUILD_NUMBER
+sudo docker ps
+
+sudo docker login -u $dockeruser -p $dockerpwd
+sudo docker push leaddevops/app:$BUILD_NUMBER
+###
